@@ -18,7 +18,10 @@ spec:
       - name: ad-service
         image: docker.io/yugandhar7/adservice:v2
         ports:
-        - containerPort: 9555     
+        - containerPort: 9555   
+        envFrom:
+          - configMapRef:
+              name: app-config  
         resources:
           requests:
             memory: "64Mi"

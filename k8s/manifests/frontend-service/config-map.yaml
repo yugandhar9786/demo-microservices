@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  labels:
+    app: frontend
+data:
+  config.js: |
+    window.APP_CONFIG = {
+      // =========================
+      // ENV
+      // =========================
+      ENVIRONMENT: "dev",
+
+      // =========================
+      // BROWSER-FACING SERVICES
+      // =========================
+      FRONTEND_API: "/",
+
+      PRODUCT_CATALOG_API: "http://productcatalogservice:3550",
+      CART_API: "http://cartservice:7070",
+      RECOMMENDATION_API: "http://recommendationservice:8080",
+      AD_API: "http://ad-service:9555",
+      EMAIL_API: "http://email-service:8080",
+      CURRENCY_API: "http://currencyservice:7000",
+
+      // =========================
+      // OPTIONAL (ONLY IF FRONTEND CALLS THEM)
+      // =========================
+      PAYMENT_API: "http://paymentservice:50051",
+      SHIPPING_API: "http://shippingservice:50051",
+
+      // =========================
+      // FEATURE FLAGS
+      // =========================
+      ENABLE_ADS: true,
+      ENABLE_RECOMMENDATIONS: true
+    };

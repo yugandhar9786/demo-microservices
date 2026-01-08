@@ -18,7 +18,10 @@ spec:
       - name: cart-service
         image: docker.io/yugandhar7/cart-svc:v2
         ports:
-        - containerPort: 7070     
+        - containerPort: 7070 
+        envFrom:
+          - configMapRef:
+              name: app-config    
         resources:
           requests:
             memory: "64Mi"

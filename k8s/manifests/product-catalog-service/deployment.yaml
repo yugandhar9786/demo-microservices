@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: product-catalog-deployment
+  labels:
+    app: product-catalog-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-catalog-service
+  template:
+    metadata: 
+      labels:
+        app: product-catalog-service
+    spec:
+      containers:
+      - name: product-catalog-service
+        image: docker.io/yugandhar7/product-catalog:v2
+        ports:
+        - containerPort: 3550
+        envFrom:
+          - configMapRef:
+              name: app-config  
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m" 
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 3550
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 3550
+          initialDelaySeconds: 15
+          periodSeconds: 5
