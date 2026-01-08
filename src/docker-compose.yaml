@@ -1,0 +1,92 @@
+version: "3.9"
+
+networks:
+  boutique-net:
+    driver: bridge
+
+services:
+
+  frontend:
+    image: yugandhar7/frontend:v2
+    container_name: frontend
+    env_file:
+      - ./frontend/.env.local
+    ports:
+      - "8080:8080"
+    depends_on:
+      - productcatalogservice
+      - cartservice
+      - currencyservice
+      - paymentservice
+      - shippingservice
+      - emailservice
+      - recommendationservice
+      - adservice
+    networks:
+      - boutique-net
+
+  productcatalogservice:
+    image: yugandhar7/product-catalog:v2
+    container_name: productcatalogservice
+    networks:
+      - boutique-net
+
+  cartservice:
+    image: yugandhar7/cart-svc:v2
+    container_name: cartservice
+    environment:
+      REDIS_ADDR: redis:6379
+    depends_on:
+      - redis
+    networks:
+      - boutique-net
+
+  currencyservice:
+    image: yugandhar7/currency-svc:v2
+    container_name: currencyservice
+    environment:
+      PORT: 7000
+      DISABLE_PROFILER: "true"
+    networks:
+      - boutique-net
+
+  paymentservice:
+    image: yugandhar7/payment-svc:v2
+    container_name: paymentservice
+    environment:
+      DISABLE_PROFILER: "true"
+    networks:
+      - boutique-net
+
+  shippingservice:
+    image: yugandhar7/shipping-svc:v2
+    container_name: shippingservice
+    networks:
+      - boutique-net
+
+  emailservice:
+    image: yugandhar7/email-svc:v2
+    container_name: emailservice
+    networks:
+      - boutique-net
+
+  recommendationservice:
+    image: yugandhar7/recommendation-svc:v2
+    container_name: recommendationservice
+    environment:
+      PRODUCT_CATALOG_SERVICE_ADDR: productcatalogservice:3550
+    networks:
+      - boutique-net
+
+  adservice:
+    image: yugandhar7/adservice:v2
+    container_name: adservice
+    networks:
+      - boutique-net
+
+  redis:
+    image: redis:7
+    container_name: redis
+    networks:
+      - boutique-net
+
