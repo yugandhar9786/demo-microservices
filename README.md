@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!-- <p align="center">
 <img src="/src/frontend/static/icons/Hipster_HeroLogoMaroon.svg" width="300" alt="Online Boutique" />
 </p> -->
@@ -168,3 +169,162 @@ Find **Protocol Buffers Descriptions** at the [`./protos` directory](/protos).
   showing Stackdriver Incident Response Management
 - [Microservices demo showcasing Go Micro](https://github.com/go-micro/demo)
 # demo-microservices
+=======
+# Kubernetes Application Exposure Journey
+## NodePort → Ingress → Gateway API (Envoy Gateway on EKS)
+
+This README documents the **step-by-step journey** of exposing a Kubernetes application, starting from **NodePort**, moving to **Ingress**, and finally implementing the **modern Gateway API using Envoy Gateway on EKS**.
+
+---
+
+## Architecture Evolution Overview
+
+### 1️⃣ NodePort (Beginner / Debugging)
+```
+User → NodeIP:NodePort → Service → Pod
+```
+
+### 2️⃣ Ingress (Traditional Production)
+```
+User → ALB/Ingress Controller → Ingress → Service → Pod
+```
+
+### 3️⃣ Gateway API (Modern / Platform Engineering)
+```
+User → AWS LoadBalancer → Envoy Gateway → Gateway → HTTPRoute → Service → Pod
+```
+
+---
+
+## Prerequisites
+- EKS cluster
+- kubectl configured
+- Application deployed
+- frontend-service (ClusterIP)
+
+---
+
+## STEP 1: NodePort Exposure
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  type: NodePort
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 8080
+      nodePort: 30080
+```
+
+Access:
+```
+http://<NodeIP>:30080
+```
+
+---
+
+## STEP 2: Ingress (AWS ALB)
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+```
+
+---
+
+## STEP 3: Gateway API with Envoy Gateway
+
+### Install Envoy Gateway
+```bash
+helm install eg oci://docker.io/envoyproxy/gateway-helm   --version v1.6.1   -n envoy-gateway-system   --create-namespace
+```
+
+---
+
+### Gateway
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: public-gateway
+spec:
+  gatewayClassName: eg
+  listeners:
+  - name: http
+    port: 80
+    protocol: HTTP
+```
+
+---
+
+### HTTPRoute
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: frontend-route
+spec:
+  parentRefs:
+  - name: public-gateway
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: frontend-service
+      port: 80
+```
+
+---
+
+## Access
+```
+http://<AWS-ELB-DNS>
+```
+
+---
+
+## Final Architecture
+```
+Internet
+ → AWS LoadBalancer
+ → Envoy Gateway
+ → Gateway + HTTPRoute
+ → frontend-service
+ → Pods
+```
+
+---
+
+## Key Takeaways
+- NodePort: testing only
+- Ingress: legacy pattern
+- Gateway API: modern, scalable
+- Envoy Gateway manages AWS LoadBalancer automatically
+
+---
+
+## Author
+Hands-on DevOps learning journey
+>>>>>>> 2deaf994 (update-manifests)
