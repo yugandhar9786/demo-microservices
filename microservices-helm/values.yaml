@@ -1,0 +1,71 @@
+services:
+  ad:
+    image: yugandhar7/adservice:v1
+    port: 9555
+
+  cart:
+    image: yugandhar7/cart-svc:v2
+    port: 7070
+
+  checkout:
+    image: yugandhar7/checkout-svc:v2
+    port: 5050
+    env:
+      PRODUCT_CATALOG_SERVICE_ADDR: productcatalog-service:3550
+      SHIPPING_SERVICE_ADDR: shipping-service:50051
+      PAYMENT_SERVICE_ADDR: payment-service:50051
+      EMAIL_SERVICE_ADDR: email-service:8080
+      CURRENCY_SERVICE_ADDR: currency-service:7000
+      CART_SERVICE_ADDR: cart-service:7070
+
+  currency:
+    image: yugandhar7/currency-svc:v2
+    port: 7000
+    env:
+      PORT: "7000"
+      DISABLE_PROFILER: "1"
+
+  email:
+    image: yugandhar7/email-svc:v2
+    port: 8080
+
+  frontend:
+    image: yugandhar7/frontend:v2
+    port: 80
+    targetPort: 8080
+    env:
+      AD_SERVICE_ADDR: ad-service:9555
+      CART_SERVICE_ADDR: cart-service:7070
+      CHECKOUT_SERVICE_ADDR: checkout-service:5050
+      PRODUCT_CATALOG_SERVICE_ADDR: productcatalog-service:3550
+      CURRENCY_SERVICE_ADDR: currency-service:7000
+      RECOMMENDATION_SERVICE_ADDR: recommendation-service:8080
+      SHIPPING_SERVICE_ADDR: shipping-service:50051
+      EMAIL_SERVICE_ADDR: email-service:8080
+      SHOPPING_ASSISTANT_SERVICE_ADDR: shopping-assistant-service:80
+
+  payment:
+    image: yugandhar7/payment-svc:v2
+    port: 50051
+    env:
+      PORT: "50051"
+      DISABLE_PROFILER: "1"
+
+  productcatalog:
+    image: yugandhar7/product-catalog:v2
+    port: 3550
+
+  recommendation:
+    image: yugandhar7/recommendation-svc:v2
+    port: 8080
+    env:
+      PRODUCT_CATALOG_SERVICE_ADDR: productcatalog-service:3550
+
+  shipping:
+    image: yugandhar7/shipping-svc:v2
+    port: 50051
+
+redis:
+  image: redis:7
+  port: 6379
+
