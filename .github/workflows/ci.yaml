@@ -1,7 +1,8 @@
-name: online boutique CI
+name: online-boutique CI
+
 on:
   push:
-    branches: [main]
+    branches: [ main ]
     paths:
       - 'src/**'
       - '.github/workflows/ci.yaml'
@@ -10,60 +11,68 @@ env:
   IMAGE_OWNER: yugandhar7
 
 jobs:
-    detect-changes:
-      runs-on: ubuntu-latest
-      outputs:
-        services: ${{ steps.set-matrix.outputs.services }}
-      steps:
-        - name: checkout code
-          uses: actions/checkout@v3
-        - id: set-matrix
-          run: |
-            
-            CHANGED=$(git diff --name-only HEAD~1 HEAD | cut -d/ -f2 | sort -u)
-            SERVICES=$(printf '"%s",' $CHANGED | sed 's/,$//')
-            echo "services=[$SERVICES]" >> $GITHUB_OUTPUT
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.set-matrix.outputs.services }}
 
-    build-and-push:
-      needs: detect-changes
-      runs-on: ubuntu-latest
-      if: needs.detect-changes.outputs.services != '[]'
-      strategy:
-        matrix:
-          service: ${{ fromJson(needs.detect-changes.outputs.services) }}
-      steps:
-        - name: checkout code
-          uses: actions/checkout@v3
-        - name: install docker buildx
-          uses: docker/setup-buildx-action@v2
-        - name: login docker
-          uses: docker/login-action@v3
-          with:
-            username: ${{ secrets.DOCKER_USERNAME }}
-            password: ${{ secrets.DOCKER_PASSWORD }}
-        - name: build and push
-          run: |
-            docker build \
-              -t $IMAGE_OWNER/${{ matrix.service }}:${{ github.sha }} \
-               src/${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v3
 
-            docker push \
-               $IMAGE_OWNER/${{ matrix.service }}:${{ github.sha }}
+      - id: set-matrix
+        run: |
+          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} \
+            | grep '^src/' \
+            | cut -d/ -f2 \
+            | sort -u)
 
+          SERVICES=$(printf '"%s",' $CHANGED | sed 's/,$//')
+          echo "services=[$SERVICES]" >> $GITHUB_OUTPUT
 
-        - name: checkout gitops repo
-          uses: actions/checkout@v3
-          with:
-            repository: yugandhar7/online-boutique-gitops
-            token: ${{ secrets.GITOPS_REPO_TOKEN }}
-            path: gitops
-        - name: update helm values
-          run: |
-            sed -i "s|${{ matrix.service }}:.*|${{ matrix.service }}:${{ github.sha }}|g" gitops/helm/values/${{ matrix.service }}-values.yaml
-        - name: commit and push changes
-          run: |
-            cd gitops
-            git config --global user.name "yugandhar9786"
-            git config --global user.email "yugandharkanaparthi9@gmail.com"
-            git commit -am "Update image tag for ${{ matrix.service }} to ${{ github.sha }}"
-            git push origin main
+  build-and-push:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.services != '[]'
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: docker/setup-buildx-action@v2
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: build and push image
+        run: |
+          docker build \
+            -t $IMAGE_OWNER/${{ matrix.service }}:${{ github.sha }} \
+            src/${{ matrix.service }}
+
+          docker push \
+            $IMAGE_OWNER/${{ matrix.service }}:${{ github.sha }}
+
+      - name: checkout gitops repo
+        uses: actions/checkout@v3
+        with:
+          repository: yugandhar7/online-boutique-gitops
+          token: ${{ secrets.GITOPS_REPO_TOKEN }}
+          path: gitops
+
+      - name: update helm values
+        run: |
+          sed -i "s|imageTag:.*|imageTag: ${{ github.sha }}|" \
+            gitops/helm/values/${{ matrix.service }}-values.yaml
+
+      - name: commit and push changes
+        run: |
+          cd gitops
+          git config user.name "github-actions"
+          git config user.email "ci@github.com"
+          git commit -am "Update ${{ matrix.service }} image to ${{ github.sha }}" || echo "No changes"
+          git push origin main
