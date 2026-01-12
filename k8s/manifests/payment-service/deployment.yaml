@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: paayment-deployment
+  name: payment-deployment
   labels:
     app: payment-service
 spec:
@@ -19,6 +19,11 @@ spec:
         image: docker.io/yugandhar7/payment-svc:v2
         ports:
         - containerPort: 50051
+        env:
+        - name: PORT
+          value: "50051"
+        - name: DISABLE_PROFILER
+          value: "true"
         envFrom:
           - configMapRef:
               name: app-config  
@@ -30,14 +35,12 @@ spec:
             memory: "128Mi"
             cpu: "500m"
         livenessProbe:
-          httpGet:
-            path: /actuator/health/liveness
+          tcpSocket:
             port: 50051
           initialDelaySeconds: 30
           periodSeconds: 10
         readinessProbe:
-          httpGet:
-            path: /actuator/health/readiness
+          tcpSocket:
             port: 50051
           initialDelaySeconds: 15
           periodSeconds: 5

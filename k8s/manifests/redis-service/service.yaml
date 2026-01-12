@@ -5,7 +5,7 @@ metadata:
   labels:
     app: redis
 spec:
-  type: ClusterIP
+  ClusterIP: None
   seLector:
     app: redis
   ports:

@@ -2,8 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend-deployment
-  labels:
-    app: frontend
 spec:
   replicas: 1
   selector:
@@ -12,35 +10,65 @@ spec:
   template:
     metadata:
       labels:
-        app: frontend 
+        app: frontend
     spec:
-      containers: 
+      containers:
       - name: frontend
         image: docker.io/yugandhar7/frontend:v2
+
         ports:
         - containerPort: 8080
+
+        # ✅ REQUIRED runtime env vars (Go binary)
+        env:
+        - name: PORT
+          value: "8080"
+
+        - name: PRODUCT_CATALOG_SERVICE_ADDR
+          value: "product-catalog-service:3550"
+
+        - name: CART_SERVICE_ADDR
+          value: "cart-service:7070"
+
+        - name: CURRENCY_SERVICE_ADDR
+          value: "currency-service:7000"
+
+        - name: RECOMMENDATION_SERVICE_ADDR
+          value: "recommendation-service:8080"
+
+        - name: AD_SERVICE_ADDR
+          value: "ad-service:9555"
+
+        - name: EMAIL_SERVICE_ADDR
+          value: "email-service:8080"
+
+        - name: PAYMENT_SERVICE_ADDR
+          value: "payment-service:50051"
+
+        - name: SHIPPING_SERVICE_ADDR
+          value: "shipping-service:50051"
+        - name: CHECKOUT_SERVICE_ADDR
+          value: "checkout-service:5050"
+        - name: SHOPPING_ASSISTANT_SERVICE_ADDR
+          value: "shopping-assistant-service:5050"
+
+
+
+
+
+
+
+        # ✅ Optional: browser config (still useful)
         envFrom:
-          - configMapRef:
-              name: frontend-config 
-        resources:
-          requests:
-            memory: "64Mi" 
-            cpu: "250m"
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
+        - configMapRef:
+            name: frontend-config
+
         livenessProbe:
-          httpGet:
-            path: /actuator/health/liveness
+          tcpSocket:
             port: 8080
           initialDelaySeconds: 30
-          periodSeconds: 10
+
         readinessProbe:
-          httpGet: 
-            path: /actuator/health/readiness
+          tcpSocket:
             port: 8080
           initialDelaySeconds: 15
-          periodSeconds: 5
-          
-            
-          
