@@ -43,8 +43,12 @@ jobs:
             password: ${{ secrets.DOCKER_PASSWORD }}
         - name: build and push
           run: |
-             docker build -t $IMAGE_OWNER/${{ matrix.service }}:${{ github.sha }} src/${{ matrix.service }}
-             docker push $IMAGE_OWNER/${{ matrix.service }}:${{ github.sha }}
+             docker build \
+                -t $IMAGE_OWNER/${{ matrix.service }}:${{ github.sha }} \
+                src/${{ matrix.service }}
+
+             docker push \
+                 $IMAGE_OWNER/${{ matrix.service }}:${{ github.sha }}
 
         - name: checkout gitops repo
           uses: actions/checkout@v3
